@@ -1,0 +1,154 @@
+---
+import ShoppingListSolid from '../components/ShoppingListSolid';
+import { pwaInfo } from 'virtual:pwa-info'; // Importante para injetar as tags corretas
+
+const months = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
+
+const currentDate = new Date();
+const currentMonth = months[currentDate.getMonth()];
+const currentYear = currentDate.getFullYear();
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lista de Compras - {currentMonth} {currentYear}</title>
+    <meta name="description" content="Organize suas compras mensais de forma prática e eficiente" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    { pwaInfo && <Fragment set:html={pwaInfo.webManifest.linkTag} /> }
+
+    <link rel="icon" href="/list.png" />
+    <link rel="apple-touch-icon" href="/list-192.png" />
+        
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#7c3aed" />
+
+    <script src="/src/scripts/pwa.js"></script>
+
+    <style is:global>
+      /* Seus estilos globais (mantive os seus) */
+      * { -webkit-tap-highlight-color: transparent; }
+      body {
+        margin: 0; padding: 0; background: #fafafa;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+      }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: #fafafa;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+  }
+
+  /* Remover animações */
+  .item-enter,
+  .category-enter,
+  .spinner,
+  .btn-ripple,
+  .badge-pulse {
+    animation: none !important;
+  }
+
+  /* Remover gradientes animados */
+  .animated-gradient {
+    background: #fafafa !important;
+  }
+
+  /* Remover glass (pesado: blur) → substituir por fundo claro normal */
+  .glass {
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Remover sombras pesadas → deixar sombra leve */
+  .shadow-smooth,
+  .shadow-strong {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
+  }
+
+  /* Inputs leves */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* Remover animação de gradiente de fundo */
+  @keyframes gradientShift { }
+
+  /* Reduzir excesso de bordas */
+  .light-border {
+    border: 1px solid #e5e7eb;
+  }
+
+  /* Scrollbar mínima */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #c7c7c7;
+    border-radius: 3px;
+  }/* Estilo para o botão de instalar (inicialmente oculto) */
+#install-btn {
+  display: none; /* Começa invisível */
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #7c3aed; /* Roxo vibrante */
+  color: white; /* Texto branco */
+  padding: 12px 24px;
+  border-radius: 50px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 9999; /* Garante que fique por cima de tudo */
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1rem;
+}
+    </style>
+  </head>
+  <body>
+    <ShoppingListSolid client:load />
+
+    <button id="install-btn">📲 Instalar App</button>
+
+<script>
+  // 1. Tipamos como 'any' para o TypeScript parar de reclamar do evento não-padrão
+  let deferredPrompt: any = null;
+  
+  const installBtn = document.getElementById('install-btn');
+
+  // 2. Verificação de segurança: Só roda o código se o botão realmente existir
+  if (installBtn) {
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      // Agora é seguro acessar .style pois verificamos 'if (installBtn)'
+      installBtn.style.display = 'block';
+      console.log("Evento de instalação capturado!");
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`Usuário escolheu: ${outcome}`);
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      installBtn.style.display = 'none';
+      console.log('App instalado com sucesso!');
+    });
+  }
+</script>
+  </body>
+</html>
